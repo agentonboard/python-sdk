@@ -10,8 +10,6 @@ from pathlib import Path
 CANONICAL_PATH = (
     Path(__file__).resolve().parent.parent.parent
     / "agentonboard"
-    / "packages"
-    / "sdk"
     / "vectors"
     / "agent-token-v1.json"
 )

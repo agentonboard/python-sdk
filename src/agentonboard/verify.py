@@ -74,7 +74,7 @@ def normalize_audience(input_str: str) -> str:
         return ""
 
 
-def resolve_issuer(issuer: str | None = None) -> str:
+def _resolve_issuer(issuer: str | None = None) -> str:
     return issuer or os.getenv("AON_ISSUER") or "https://agentonboard.xyz"
 
 
@@ -125,7 +125,7 @@ class Verifier:
                 error=f'Audience does not normalize to a hostname: "{audience}"',
             )
 
-        resolved_iss = resolve_issuer(issuer)
+        resolved_iss = _resolve_issuer(issuer)
         resolved_jwks_url = jwks_url or f"{resolved_iss.rstrip('/')}/.well-known/jwks.json"
 
         try:
@@ -344,7 +344,7 @@ class Verifier:
                 error=f'Audience does not normalize to a hostname: "{audience}"',
             )
 
-        resolved_iss = resolve_issuer(issuer)
+        resolved_iss = _resolve_issuer(issuer)
         resolved_jwks_url = jwks_url or f"{resolved_iss.rstrip('/')}/.well-known/jwks.json"
 
         try:

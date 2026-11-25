@@ -32,11 +32,11 @@ class KeyNotFoundError(Exception):
     """Raised when the specific kid is not present in an otherwise valid JWKS."""
 
 
-def is_base64url(val: Any) -> bool:
+def _is_base64url(val: Any) -> bool:
     return isinstance(val, str) and bool(val) and bool(BASE64URL_RE.match(val))
 
 
-def is_usable_key_entry(entry: Any) -> bool:
+def _is_usable_key_entry(entry: Any) -> bool:
     if not isinstance(entry, dict):
         return False
     kid = entry.get("kid")
@@ -47,19 +47,19 @@ def is_usable_key_entry(entry: Any) -> bool:
         return False
     if kty != "RSA":
         return True
-    return is_base64url(entry.get("n")) and is_base64url(entry.get("e"))
+    return _is_base64url(entry.get("n")) and _is_base64url(entry.get("e"))
 
 
-def assert_jwk_set(value: Any) -> dict[str, list[dict[str, Any]]]:
+def _assert_jwk_set(value: Any) -> dict[str, list[dict[str, Any]]]:
     if not isinstance(value, dict) or "keys" not in value:
         raise KeySourceUnavailableError("JWKS is not a { keys: [...] } set of usable key entries")
     keys = value.get("keys")
-    if not isinstance(keys, list) or not all(is_usable_key_entry(k) for k in keys):
+    if not isinstance(keys, list) or not all(_is_usable_key_entry(k) for k in keys):
         raise KeySourceUnavailableError("JWKS is not a { keys: [...] } set of usable key entries")
     return {"keys": [dict(k) for k in keys]}
 
 
-def parse_rsa_key(jwk: dict[str, Any]) -> RSAPublicKey:
+def _parse_rsa_key(jwk: dict[str, Any]) -> RSAPublicKey:
     try:
         key = RSAAlgorithm.from_jwk(jwk)
     except Exception as exc:
@@ -95,7 +95,7 @@ class KeySource:
         self.last_cooldown_attempt: float = 0.0
 
     def _select_key(self, jwks: dict[str, Any], kid: str) -> RSAPublicKey:
-        valid_set = assert_jwk_set(jwks)
+        valid_set = _assert_jwk_set(jwks)
         matching = [k for k in valid_set["keys"] if k.get("kid") == kid]
         if len(matching) > 1:
             raise KeySourceUnavailableError(
@@ -108,7 +108,7 @@ class KeySource:
         jwk = matching[0]
         if jwk.get("kty") != "RSA":
             raise KeySourceUnavailableError("Signing key algorithm must be RSA")
-        return parse_rsa_key(jwk)
+        return _parse_rsa_key(jwk)
 
     def get_key(self, kid: str) -> RSAPublicKey:
         if self.supplied_jwks is not None:
@@ -145,7 +145,7 @@ class KeySource:
                             )
                         raw = resp.json()
 
-                checked = assert_jwk_set(raw)
+                checked = _assert_jwk_set(raw)
                 self.last_known_good = checked
                 self.last_fetch_time = time.time()
                 self.last_cooldown_attempt = self.last_fetch_time
@@ -209,7 +209,7 @@ class KeySource:
                             )
                         raw = resp.json()
 
-                checked = assert_jwk_set(raw)
+                checked = _assert_jwk_set(raw)
                 self.last_known_good = checked
                 self.last_fetch_time = time.time()
                 self.last_cooldown_attempt = self.last_fetch_time

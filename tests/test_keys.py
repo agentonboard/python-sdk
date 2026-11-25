@@ -5,7 +5,7 @@ from agentonboard.keys import (
     KeySource,
     KeySourceCache,
     KeySourceUnavailableError,
-    assert_jwk_set,
+    _assert_jwk_set,
 )
 
 
@@ -21,19 +21,19 @@ def test_assert_jwk_set_validation():
             }
         ]
     }
-    assert assert_jwk_set(valid) == valid
+    assert _assert_jwk_set(valid) == valid
 
     # Missing keys field
     with pytest.raises(KeySourceUnavailableError):
-        assert_jwk_set({"other": []})
+        _assert_jwk_set({"other": []})
 
     # Empty kid
     with pytest.raises(KeySourceUnavailableError):
-        assert_jwk_set({"keys": [{"kty": "RSA", "kid": "", "n": "a", "e": "b"}]})
+        _assert_jwk_set({"keys": [{"kty": "RSA", "kid": "", "n": "a", "e": "b"}]})
 
     # Invalid base64url characters in RSA n
     with pytest.raises(KeySourceUnavailableError):
-        assert_jwk_set(
+        _assert_jwk_set(
             {"keys": [{"kty": "RSA", "kid": "k1", "n": "not+valid=b64url", "e": "AQAB"}]}
         )
 
